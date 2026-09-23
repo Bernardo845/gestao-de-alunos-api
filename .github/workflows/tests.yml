@@ -2,39 +2,32 @@ name: Testes de API
 
 on:
   push:
-    branches: [main]
+    branches: [ main ]
   pull_request:
-    branches: [main]
+    branches: [ main ]
 
 jobs:
-  test:
+  build:
     runs-on: ubuntu-latest
 
-    services:
-      mongodb:
-        image: mongo:7
-        ports:
-          - 27017:27017
-        options: >-
-          --health-cmd "mongosh --eval 'db.runCommand({ ping: 1 })'"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
     steps:
-      - name: Checkout do código
-        uses: actions/checkout@v4
+    - uses: actions/checkout@v3
 
-      - name: Configurar Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: npm
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
 
-      - name: Instalar dependências
-        run: npm ci
+    - name: Install dependencies
+      run: npm install
 
-      - name: Executar testes
-        run: npm test
-        env:
-          MONGODB_URI: mongodb://127.0.0.1:27017/gestao-de-alunos-test
+    - name: Start Server in Background and Run Tests
+      env:
+        PORT: 3000
+        URL_BASE: http://localhost:3000
+        ADMIN_EMAIL: admin@email.com
+        ADMIN_PASSWORD: admin123
+      run: |
+        npm start &
+        npx wait-on http://localhost:3000
+        npm test
